@@ -63,7 +63,7 @@ const PastEvents = () => {
     const createMutation = useMutation({
         mutationFn: EventsApis.CreatePastEvent,
         onSuccess: () => {
-            queryClient.invalidateQueries(['townhalls']);
+            queryClient.invalidateQueries(['townhalls'] as any);
             setShowModal(false);
         },
         onError: (error: any) => {
@@ -74,7 +74,7 @@ const PastEvents = () => {
     const updateMutation = useMutation({
         mutationFn: EventsApis.UpdatePastEvent,
         onSuccess: () => {
-            queryClient.invalidateQueries(['townhalls']);
+            queryClient.invalidateQueries(['townhalls'] as any);
             setShowModal(false);
         },
         onError: (error: any) => {
@@ -85,7 +85,7 @@ const PastEvents = () => {
     const deleteMutation = useMutation({
         mutationFn: EventsApis.DeletePastEvent,
         onSuccess: () => {
-            queryClient.invalidateQueries(['townhalls']);
+            queryClient.invalidateQueries(['townhalls'] as any);
         },
         onError: (error: any) => {
             console.error('Delete error:', error);

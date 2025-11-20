@@ -1,71 +1,118 @@
 import Header from '@/components/layout/Header'
 import React, { useState } from 'react'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
+import ActivityApis from '@/services/Activity/activity.api';
+import NotificationForm from '@/components/NotificationForm'
 
-interface NotificationFormData {
-    from: string;
-    message: string;
-    buttonLabel: string;
-    buttonUrl: string;
-    imageFile: File | null;
-    postTime: string;
-    expireTime: string;
-    showNumberOfTimes: number;
-    cameraTypes: string[];
-    photoTypes: string[];
-    burningBits: string[];
-    genre: string[];
-    weCanHelpWith: string[];
-    letsHuntFor: string[];
-    imGoodAt: string[];
-}
 
-const validationSchema = Yup.object({
-    from: Yup.string().email('Invalid email').required('From email is required'),
-    message: Yup.string().required('Message is required'),
-    buttonLabel: Yup.string().required('Button Label is required'),
-    buttonUrl: Yup.string().url('Invalid URL').required('Button URL is required'),
-    postTime: Yup.string().required('Post time is required'),
-    expireTime: Yup.string().required('Expire time is required'),
-    showNumberOfTimes: Yup.number().min(1, 'Must be at least 1').required('Number of times is required'),
-});
+
+
+
 
 const Index = () => {
-    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    const initialValues: NotificationFormData = {
-        from: 'Karl from Photo Contest (not editable)',
-        message: '',
-        buttonLabel: '',
-        buttonUrl: '',
-        imageFile: null,
-        postTime: '',
-        expireTime: '',
-        showNumberOfTimes: 1,
-        cameraTypes: [],
-        photoTypes: [],
-        burningBits: [],
-        genre: [],
-        weCanHelpWith: [],
-        letsHuntFor: [],
-        imGoodAt: [],
+
+    const [showForm, setShowForm] = useState(false);
+    const [editingNotification, setEditingNotification] = useState(null);
+    const [loadingNotificationId, setLoadingNotificationId] = useState<string | null>(null);
+    const [Notificationsdata, setNotificationsdata] = useState<Notification[]>([]);
+
+    // Use react-query to fetch notifications with infinite scroll
+    const {
+        data: infiniteData,
+        isLoading,
+        isError,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
+        queryKey: ['notifications'],
+        queryFn: async ({ pageParam = 0 }) => {
+            const response = await ActivityApis.NotificationList({ offSet: pageParam, limit: 10 });
+            return response.data.data.notifications;
+        },
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.length === 10 ? allPages.length * 10 : undefined;
+        },
+        initialPageParam: 0,
+    });
+
+    const queryClient = useQueryClient();
+
+    const stopStartMutation = useMutation({
+        mutationFn: async ({ notificationId, isStopped }: { notificationId: string, isStopped: boolean }) => {
+            return await ActivityApis.NotificationStopAndStart({ notificationId, isStopped });
+        },
+        onSuccess: () => {
+
+        },
+        onError: () => {
+            alert('Failed to update notification status.');
+        }
+    });
+
+
+
+
+    interface Notification {
+        id: number;
+        from: string;
+        message: string;
+        postTime: string;
+        expire: string;
+        image: string | null;
+        isActive: boolean;
+    }
+
+    // Map API data to UI format
+    const allRawNotifications = infiniteData?.pages.flat() || [];
+    const notifications: Notification[] = Array.isArray(allRawNotifications)
+        ? allRawNotifications.map((item: any) => ({
+            id: item.id,
+            from: 'Ken from Photo Contest',
+            message: item.message,
+            postTime: item.postedAt ? new Date(item.postedAt).toLocaleString('en-GB', { hour12: false }) + ' UTC' : '',
+            expire: item.expirationType === 'never' ? 'Never' : (item.expiredAt ? new Date(item.expiredAt).toLocaleString('en-GB', { hour12: false }) + ' UTC' : ''),
+            image: item.photo_url || item.compressedImageUrl || null,
+            isActive: !!item.isActive
+        }))
+        : [];
+
+    React.useEffect(() => {
+        setNotificationsdata(notifications);
+    }, [infiniteData]);
+
+    const handleEditNotification = (id: any) => {
+        const notificationToEdit = allRawNotifications.find((item: any) => item.id === id);
+
+        if (notificationToEdit) {
+            setEditingNotification(notificationToEdit);
+            setShowForm(true);
+        }
     };
 
-    const handleSubmit = (values: NotificationFormData) => {
-        console.log('Form submitted with values:', values);
-        // TODO: Implement API call to send notification
+    const handleStopStartNotification = (notificationId: string, isActive: boolean) => {
+        setLoadingNotificationId(notificationId);
+        stopStartMutation.mutate(
+            { notificationId, isStopped: isActive },
+            {
+                onSuccess: () => {
+                    setNotificationsdata((prev) =>
+                        prev.map((n) =>
+                            String(n.id) === notificationId
+                                ? { ...n, isActive: !isActive }
+                                : n
+                        )
+                    );
+                },
+                onSettled: () => setLoadingNotificationId(null)
+            }
+        );
     };
 
-    const checkboxOptions = {
-        cameraTypes: ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Olympus', 'Panasonic', 'Leica', 'Other'],
-        photoTypes: ['Hunting', 'Professional', 'Daily', 'Travel', 'Street', 'Portrait'],
-        burningBits: ['0-4', '5-9', '10-14', '15-19', '20+'],
-        genre: ['Landscape', 'Portrait', 'Street', 'Wildlife', 'Sports', 'Architecture', 'Macro', 'Abstract', 'Other'],
-        weCanHelpWith: ['Composition', 'Technical', 'Post Processing', 'Equipment', 'Lighting', 'Business'],
-        letsHuntFor: ['Landscapes', 'Street Photography', 'Wildlife', 'Architecture', 'People/Portraits', 'Night Photography', 'Macro', 'Abstract'],
-        imGoodAt: ['Composition', 'Lighting', 'Post Processing', 'Equipment Knowledge', 'Technical Settings', 'Creative Vision', 'Business Side', 'Teaching']
-    };
+
 
     return (
         <>
@@ -73,286 +120,188 @@ const Index = () => {
             <div className="container-fluid" style={{ maxWidth: '1550px' }}>
                 <div className="row">
                     <div className="col-12">
-                        <div className="content-wrapper" style={{ padding: '20px' }}>
-                            <h1 style={{ fontSize: '18px', marginBottom: '10px', marginTop: '80px' }}>
-                                This page enables you to send a notification to users' activity feed page.
-                            </h1>
-                            <p style={{ color: '#0066cc', textDecoration: 'underline', cursor: 'pointer', marginBottom: '30px' }}>
-                                View Existing Notifications
-                            </p>
+                        <div className="content-wrapper" style={{ padding: '20px', backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+                            <div className="d-flex align-items-center mb-4" style={{ marginTop: '80px' }}>
 
-                            <Formik
-                                initialValues={initialValues}
-                                validationSchema={validationSchema}
-                                onSubmit={handleSubmit}
-                            >
-                                {({ values, errors, touched, setFieldValue, isSubmitting }) => (
-                                    <Form>
-                                        <div className="row">
-                                            <div className="col-md-6">
-                                                {/* From Field */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>From:</label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control"
-                                                        value={values.from}
-                                                        disabled
-                                                        style={{ backgroundColor: '#f8f9fa' }}
-                                                    />
-                                                </div>
+                                <div>
+                                    <h1 className="h3 mb-1 text-dark fw-bold">
+                                        {editingNotification ? "Edit Notification" :
+                                            (showForm && !editingNotification ? " Create Notification" : " Notifications")}
+                                    </h1>
 
-                                                {/* Message Field */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>Message:</label>
-                                                    <Field
-                                                        as="textarea"
-                                                        name="message"
-                                                        className="form-control"
-                                                        rows={4}
-                                                        style={{ resize: 'vertical' }}
-                                                    />
-                                                    <div style={{ fontSize: '12px', color: '#666', textAlign: 'right', marginTop: '5px' }}>
-                                                        Max characters: 0/777
-                                                    </div>
-                                                    <ErrorMessage name="message" component="div" className="text-danger" />
-                                                </div>
+                                </div>
+                            </div>
 
-                                                {/* Button Label */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>Button Label:</label>
-                                                    <Field
-                                                        type="text"
-                                                        name="buttonLabel"
-                                                        className="form-control"
-                                                    />
-                                                    <ErrorMessage name="buttonLabel" component="div" className="text-danger" />
-                                                </div>
+                            <div className="d-flex justify-content-end mb-4">
+                                <button
+                                    className={`btn ${showForm ? 'btn-outline-secondary' : 'btn-primary'} btn-lg px-4 `}
+                                    onClick={() => {
+                                        if (showForm) {
+                                            setShowForm(false);
+                                            setEditingNotification(null);
+                                        } else {
+                                            setShowForm(true);
+                                        }
+                                    }}
+                                    style={{ borderRadius: '10px', fontWeight: '400', color: 'black', fontSize: '18px' }}
+                                >
 
-                                                {/* Button URL */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>Button URL:</label>
-                                                    <Field
-                                                        type="url"
-                                                        name="buttonUrl"
-                                                        className="form-control"
-                                                    />
-                                                    <ErrorMessage name="buttonUrl" component="div" className="text-danger" />
-                                                </div>
+                                    {showForm ? 'back' : 'Create New Notification'}
+                                </button>
+                            </div>
 
-                                                {/* Upload Image */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>
-                                                        Upload Image<br />
-                                                        <small>Max (??? X ??? Px)</small>
-                                                    </label>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="form-control"
-                                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                            const file = e.target.files?.[0];
-                                                            if (file) {
-                                                                setFieldValue('imageFile', file);
-                                                                setPreviewImage(URL.createObjectURL(file));
-                                                            }
-                                                        }}
-                                                    />
-                                                    {previewImage && (
-                                                        <div className="mt-2">
-                                                            <img src={previewImage} alt="Preview" style={{ maxWidth: '200px', maxHeight: '200px' }} />
-                                                        </div>
-                                                    )}
-                                                </div>
+                            {showForm ? (
+                                <NotificationForm
+                                    onSuccess={() => {
+                                        setShowForm(false);
+                                        setEditingNotification(null);
+                                    }}
+                                    onClose={() => {
+                                        setShowForm(false);
+                                        setEditingNotification(null);
+                                    }}
+                                    editData={editingNotification}
+                                />
+                            ) : (
+                                <div className="notification-list">
+                                    {isLoading ? (
+                                        <div className="text-center py-5">
+                                            <span className="h5 text-secondary">Loading...</span>
+                                        </div>
+                                    ) : Notificationsdata.length === 0 ? (
+                                        <div className="text-center py-5">
+                                            <div className="card border-0 shadow-sm p-5" style={{ borderRadius: '15px' }}>
+                                                <div className="text-muted">
 
-                                                {/* Post Time */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>When</label>
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <div>
-                                                            <input type="radio" name="postTimeType" value="immediately" defaultChecked />
-                                                            <label className="ms-1">Immediately</label>
-                                                        </div>
-                                                        <div>
-                                                            <input type="radio" name="postTimeType" value="specific" />
-                                                            <label className="ms-1">Set Time</label>
-                                                        </div>
-                                                        <Field
-                                                            type="datetime-local"
-                                                            name="postTime"
-                                                            className="form-control"
-                                                            style={{ width: 'auto' }}
-                                                        />
-                                                        <span>UTC</span>
-                                                    </div>
-                                                </div>
+                                                    <h4 className="text-dark mb-3">No Notifications Found</h4>
 
-                                                {/* Expire Time */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>Expire</label>
-                                                    <div className="d-flex align-items-center gap-2">
-                                                        <div>
-                                                            <input type="radio" name="expireType" value="never" defaultChecked />
-                                                            <label className="ms-1">Never</label>
-                                                        </div>
-                                                        <div>
-                                                            <input type="radio" name="expireType" value="specific" />
-                                                            <label className="ms-1">Set Time</label>
-                                                        </div>
-                                                        <Field
-                                                            type="datetime-local"
-                                                            name="expireTime"
-                                                            className="form-control"
-                                                            style={{ width: 'auto' }}
-                                                        />
-                                                        <span>UTC</span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Show Number of Times */}
-                                                <div className="mb-3">
-                                                    <label className="form-label" style={{ fontWeight: 'bold' }}>Show Number of Times</label>
-                                                    <Field
-                                                        type="number"
-                                                        name="showNumberOfTimes"
-                                                        className="form-control"
-                                                        style={{ width: '100px' }}
-                                                        min="1"
-                                                    />
-                                                    <ErrorMessage name="showNumberOfTimes" component="div" className="text-danger" />
-                                                </div>
-                                            </div>
-
-                                            <div className="col-md-6">
-                                                {/* Who Section */}
-                                                <div className="mb-4">
-                                                    <label className="form-label" style={{ fontWeight: 'bold', fontSize: '16px' }}>Who</label>
-
-                                                    <div className="row">
-                                                        {/* Camera Column */}
-                                                        <div className="col-md-4">
-                                                            <strong>Camera</strong>
-                                                            {checkboxOptions.cameraTypes.map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="cameraTypes" value={option} className="form-check-input" id={`camera-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`camera-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-
-                                                        {/* Photo Type Column */}
-                                                        <div className="col-md-4">
-                                                            <strong>Photo Type</strong>
-                                                            {checkboxOptions.photoTypes.map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="photoTypes" value={option} className="form-check-input" id={`photoType-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`photoType-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-
-                                                        {/* Burning Bits Column */}
-                                                        <div className="col-md-4">
-                                                            <strong>Burning Bits</strong>
-                                                            {checkboxOptions.burningBits.map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="burningBits" value={option} className="form-check-input" id={`burningBits-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`burningBits-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="row mt-3">
-                                                        {/* Genre Column */}
-                                                        <div className="col-md-4">
-                                                            <strong>Genre</strong>
-                                                            {checkboxOptions.genre.map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="genre" value={option} className="form-check-input" id={`genre-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`genre-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-
-                                                        {/* We can help with Column */}
-                                                        <div className="col-md-4">
-                                                            <strong>We can help with</strong>
-                                                            {checkboxOptions.weCanHelpWith.map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="weCanHelpWith" value={option} className="form-check-input" id={`weCanHelpWith-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`weCanHelpWith-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Let's Hunt For Section */}
-                                                <div className="mb-4">
-                                                    <strong>Let's Hunt For:</strong>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            {checkboxOptions.letsHuntFor.slice(0, Math.ceil(checkboxOptions.letsHuntFor.length / 2)).map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="letsHuntFor" value={option} className="form-check-input" id={`letsHuntFor-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`letsHuntFor-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            {checkboxOptions.letsHuntFor.slice(Math.ceil(checkboxOptions.letsHuntFor.length / 2)).map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="letsHuntFor" value={option} className="form-check-input" id={`letsHuntFor-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`letsHuntFor-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* I'm Good At Section */}
-                                                <div className="mb-4">
-                                                    <strong>I'm Good At:</strong>
-                                                    <div className="row">
-                                                        <div className="col-md-6">
-                                                            {checkboxOptions.imGoodAt.slice(0, Math.ceil(checkboxOptions.imGoodAt.length / 2)).map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="imGoodAt" value={option} className="form-check-input" id={`imGoodAt-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`imGoodAt-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                        <div className="col-md-6">
-                                                            {checkboxOptions.imGoodAt.slice(Math.ceil(checkboxOptions.imGoodAt.length / 2)).map((option) => (
-                                                                <div key={option} className="form-check">
-                                                                    <Field type="checkbox" name="imGoodAt" value={option} className="form-check-input" id={`imGoodAt-${option}`} />
-                                                                    <label className="form-check-label" htmlFor={`imGoodAt-${option}`}>{option}</label>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                    ) : (
+                                        Notificationsdata.map((notification) => (
+                                            <div key={notification.id} className="card mb-4 border-0 shadow-sm position-relative" style={{ borderRadius: '15px', overflow: 'hidden' }}>
+                                                <div className="card-body p-4">
+                                                    <div className="row align-items-start">
+                                                        <div className="col-md-9">
+                                                            <div className="mb-3">
+                                                                <div className="d-flex align-items-center mb-2">
+                                                                    <label className="text-primary fw-semibold small text-uppercase mb-1">From:</label>
+                                                                    <input className="form-control bg-light border-0 rounded-3" readOnly value={notification.from} />
+                                                                </div>
+                                                            </div>
+                                                            <div className="mb-3">
+                                                                <label className="text-primary fw-semibold small text-uppercase mb-2 d-block">Message:</label>
+                                                                <textarea
+                                                                    className="form-control bg-light border-0 rounded-3"
+                                                                    style={{ fontSize: '15px', lineHeight: '1.6', resize: 'none' }}
+                                                                    rows={4}
+                                                                    value={notification.message}
+                                                                    readOnly
+                                                                />
+                                                            </div>
+                                                            <div className="row mb-3">
+                                                                <div className="col-md-6">
+                                                                    <div className="d-flex align-items-center">
 
-                                        {/* Submit Button */}
-                                        <div className="mt-4 text-center">
+                                                                        <div>
+                                                                            <label className="text-primary fw-semibold small text-uppercase mb-1">Post Time:</label>
+                                                                            <div className="text-muted small">{notification.postTime}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="col-md-6">
+                                                                    <div className="d-flex align-items-center">
+
+                                                                        <div>
+                                                                            <label className="text-primary fw-semibold small text-uppercase mb-1">Expire:</label>
+                                                                            <div className="text-muted small">{notification.expire}</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="d-flex gap-2 mt-4">
+                                                                <button
+                                                                    className="btn btn-outline-primary px-3 py-2"
+                                                                    onClick={() => handleEditNotification(notification.id)}
+                                                                    style={{ borderRadius: '8px', fontWeight: '500' }}
+                                                                >
+
+                                                                    View/Edit
+                                                                </button>
+                                                                <button
+                                                                    className={`btn px-3 py-2 ${notification.isActive
+                                                                        ? 'btn-outline-danger'
+                                                                        : 'btn-outline-success'
+                                                                        }`}
+                                                                    style={{ borderRadius: '8px', fontWeight: '500' }}
+                                                                    onClick={() => handleStopStartNotification(String(notification.id), notification.isActive)}
+                                                                    disabled={loadingNotificationId === String(notification.id) && stopStartMutation.isPending}
+                                                                >
+                                                                    {loadingNotificationId === String(notification.id) && stopStartMutation.isPending
+                                                                        ? 'Loading...'
+                                                                        : notification.isActive ? 'Stop' : 'Start'}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="col-md-3">
+                                                            <div className="text-center position-relative">
+                                                                <span className={`badge position-absolute top-0 end-0 mt-2 me-2 ${notification.isActive
+                                                                    ? 'bg-success'
+                                                                    : 'bg-secondary'
+                                                                    } px-2 py-1`} style={{ fontSize: '1rem', zIndex: 2 }}>
+                                                                    {notification.isActive ? 'Active' : 'Inactive'}
+                                                                </span>
+                                                                <label className="text-primary fw-semibold small text-uppercase mb-2 d-block">Image:</label>
+                                                                {notification.image ? (
+                                                                    <img
+                                                                        src={notification.image}
+                                                                        alt="Notification"
+                                                                        className="rounded-3 shadow-sm"
+                                                                        style={{
+                                                                            width: '120px',
+                                                                            height: '80px',
+                                                                            objectFit: 'cover'
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div
+                                                                        className="d-flex align-items-center justify-content-center bg-light border rounded-3"
+                                                                        style={{
+                                                                            width: '120px',
+                                                                            height: '80px',
+                                                                            border: '2px dashed #dee2e6',
+                                                                            margin: ' auto'
+                                                                        }}
+                                                                    >
+                                                                        <div className="text-center">
+
+                                                                            <div className="text-muted small">No Image</div>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                    {hasNextPage && (
+                                        <div className="text-center mt-4">
                                             <button
-                                                type="submit"
-                                                className="btn btn-primary"
-                                                disabled={isSubmitting}
-                                                style={{
-                                                    padding: '10px 40px',
-                                                    fontSize: '16px'
-                                                }}
+                                                className="btn btn-primary px-4 py-2"
+                                                onClick={() => fetchNextPage()}
+                                                disabled={isFetchingNextPage}
+                                                style={{ borderRadius: '8px', fontWeight: '500' }}
                                             >
-                                                {isSubmitting ? 'Sending...' : 'Send Notification'}
+                                                {isFetchingNextPage ? 'Loading...' : 'Load More'}
                                             </button>
                                         </div>
-                                    </Form>
-                                )}
-                            </Formik>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
