@@ -17,7 +17,7 @@ interface NotificationFormData {
     shownNoOfTimes: number;
     cameraTypes: string[];
     photographerTypes: string[];
-    photoDesireRatio: string;
+    photoDesireRatio: string[];
     genresList: string[];
     photoAssistance: string[];
     meetFor: string[];
@@ -52,7 +52,9 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
 
     const validationSchema = Yup.object({
         from: Yup.string(),
-        message: Yup.string().required('Message is required'),
+        message: Yup.string()
+            .required('Message is required')
+            .max(200, 'Message must be 200 characters or less'),
         btnLabel: Yup.string()
             .test('btnLabel-btnUrl-validation', 'Button Label is required when Button URL is provided', function (value) {
                 const { btnUrl } = this.parent;
@@ -88,7 +90,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
         const result = {
             cameraTypes: [],
             photographerTypes: [],
-            photoDesireRatio: '',
+            photoDesireRatio: [],
             genresList: [],
             photoAssistance: [],
             meetFor: [],
@@ -105,7 +107,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                         result.photographerTypes = condition.value || [];
                         break;
                     case 'photo_desire_ratio':
-                        result.photoDesireRatio = condition.value?.[0] || '';
+                        result.photoDesireRatio = condition.value || [];
                         break;
                     case 'genres_list':
                         result.genresList = condition.value || [];
@@ -151,7 +153,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
         shownNoOfTimes: 1,
         cameraTypes: [],
         photographerTypes: [],
-        photoDesireRatio: '',
+        photoDesireRatio: [],
         genresList: [],
         photoAssistance: [],
         meetFor: [],
@@ -196,10 +198,10 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                 });
             }
 
-            if (values.photoDesireRatio) {
+            if (values.photoDesireRatio.length > 0) {
                 targetConditions.push({
                     type: "photo_desire_ratio",
-                    value: [values.photoDesireRatio]
+                    value: values.photoDesireRatio
                 });
             }
 
@@ -264,7 +266,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
     };
 
     const checkboxOptions = {
-        cameraTypes: ['Canon', 'Nikon', 'Sony', 'Fujifilm', 'Olympus', 'Panasonic', 'Leica', 'Other'],
+        cameraTypes: ['Canon', 'Nikon', 'Sony', 'Fuji', 'Olympus', 'Pentax', 'Leica', 'Smartphone', 'Lumix', 'Other'],
         photoTypes: ['Hunting', 'Professional', 'Daily', 'Travel', 'Street', 'Portrait'],
         burningBits: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
         genre: ['Landscape', 'Portrait', 'Street', 'Wildlife', 'Sports', 'Architecture', 'Macro', 'Abstract', 'Other'],
@@ -321,9 +323,14 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                                                     className="form-control"
                                                     rows={4}
                                                     style={{ resize: 'vertical' }}
+                                                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                                        if (e.target.value.length <= 200) {
+                                                            setFieldValue('message', e.target.value);
+                                                        }
+                                                    }}
                                                 />
                                                 <div style={{ fontSize: '12px', color: '#666', textAlign: 'right', marginTop: '5px' }}>
-                                                    Max characters: 0/777
+                                                    Max characters: {values.message.length}/200
                                                 </div>
                                                 <ErrorMessage name="message" component="div" className="text-danger" />
                                             </div>
@@ -354,7 +361,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                                             <div className="mb-3">
                                                 <label className="form-label" style={{ fontWeight: 'bold' }}>
                                                     Upload Image<br />
-                                                    <small>Max (??? X ??? Px)</small>
+                                                    <small>Max (250 × 167 Px)</small>
                                                 </label>
                                                 <input
                                                     type="file"
@@ -363,8 +370,17 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                                                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                                         const file = e.target.files?.[0];
                                                         if (file) {
-                                                            setFieldValue('photo', file);
-                                                            setPreviewImage(URL.createObjectURL(file));
+                                                            const img = new Image();
+                                                            img.onload = () => {
+                                                                if (img.width <= 250 && img.height <= 167) {
+                                                                    setFieldValue('photo', file);
+                                                                    setPreviewImage(URL.createObjectURL(file));
+                                                                } else {
+                                                                    alert('Image size must be 250x167 pixels or smaller.');
+                                                                    e.target.value = ''; // Reset the input
+                                                                }
+                                                            };
+                                                            img.src = URL.createObjectURL(file);
                                                         }
                                                     }}
                                                 />
@@ -450,7 +466,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                                         <div className="col-md-6">
                                             {/* Who Section */}
                                             <div className="mb-4">
-                                                <label className="form-label" style={{ fontWeight: 'bold', fontSize: '16px' }}>Who</label>
+                                                {/* <label className="form-label" style={{ fontWeight: 'bold', fontSize: '16px' }}>Who</label> */}
 
                                                 <div className="row">
                                                     {/* Camera Column */}
@@ -477,10 +493,10 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
 
                                                     {/* Photo Desire Ratio Column */}
                                                     <div className="col-md-4">
-                                                        <strong>Photo Desire Ratio</strong>
+                                                        <strong>Burning Itch</strong>
                                                         {checkboxOptions.burningBits.map((option) => (
                                                             <div key={option} className="form-check">
-                                                                <Field type="radio" name="photoDesireRatio" value={option} className="form-check-input" id={`photoDesireRatio-${option}`} />
+                                                                <Field type="checkbox" name="photoDesireRatio" value={option} className="form-check-input" id={`photoDesireRatio-${option}`} />
                                                                 <label className="form-check-label" htmlFor={`photoDesireRatio-${option}`}>{option}</label>
                                                             </div>
                                                         ))}
@@ -490,7 +506,7 @@ const NotificationForm: React.FC<NotificationFormProps> = ({ onClose, onSuccess,
                                                 <div className="row mt-3">
                                                     {/* Genres List Column */}
                                                     <div className="col-md-4">
-                                                        <strong>Genres List</strong>
+                                                        <strong>Genres</strong>
                                                         {checkboxOptions.genre.map((option) => (
                                                             <div key={option} className="form-check">
                                                                 <Field type="checkbox" name="genresList" value={option} className="form-check-input" id={`genresList-${option}`} />

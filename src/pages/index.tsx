@@ -27,6 +27,9 @@ interface User {
   following_count?: number;
   login?: string;
   instagram_link?: string;
+  pro_member?: number | string;
+  personal_photo_count?: number;
+  vault_count?: number;
 }
 
 interface UserListResponse {
@@ -331,11 +334,11 @@ export default function Home() {
                             "Instagram",
                             "Location",
                             "Last Activity",
+                            "Pro",
                             "PP",
                             "V",
                             "R",
                             "PPF",
-                            "Extra",
                             "Hunted",
                             "Portfolio",
                             "Comments G",
@@ -463,11 +466,11 @@ export default function Home() {
                               </td>
                               <td className="ellipsis">{data.location || "_"}</td>
                               <td className="ellipsis">{data.last_activity || "_"}</td>
-                              <td>0</td>
-                              <td>0</td>
-                              <td>0</td>
-                              <td>0</td>
-                              <td>0</td>
+                              <td>{data?.pro_member}</td>
+                              <td>{data?.personal_photo_count}</td>
+                              <td>{data?.vault_count}</td>
+                              <td>_</td>
+                              <td>{data.followers_count}</td>
                               <td>
                                 {Number(data.hunted) > 0 ? (
                                   <Link href={`/user-images/?id=${data.id}&type=hunted&name=${data.name}&totalphoto=${data.hunted}`}>{data.hunted}</Link>
