@@ -11,7 +11,7 @@ const Header: React.FC = () => {
         { href: "/past-events", label: "Past Events" },
         { href: "/events", label: "Events" },
         { href: "/activity-callout", label: "Activity Page Callout" },
-        // { href: "/activity", label: "Notification" }
+        { href: "/activity", label: "Notification" }
     ];
     let LogOutHandler = () => {
         Cookies.remove("PhotoContestCMS.");
