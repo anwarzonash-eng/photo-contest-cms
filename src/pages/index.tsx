@@ -30,6 +30,10 @@ interface User {
   pro_member?: number | string;
   personal_photo_count?: number;
   vault_count?: number;
+  is_personal_site?: boolean | number | string;
+  personal_website_url?: string;
+  reports_count?: number;
+  personal_page_followers_count?: number;
 }
 
 interface UserListResponse {
