@@ -27,7 +27,7 @@ jobs:
 
       - run: cp .env.example .env
       - run: npm run build
-      - name: start
+      - name: run pm2
         run: | 
           pm2 reload photocontest_cms || pm2 start npm --name photocontest_cms -- run start
 
