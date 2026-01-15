@@ -4,11 +4,11 @@ import Header from '@/components/layout/Header';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 import EventsApis from '@/services/Events/event.api';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, } from '@tanstack/react-query';
 
 const Events = () => {
     const [uploadedImage, setUploadedImage] = useState<File | null>(null);
-    const queryClient = useQueryClient();
+
 
     const {
         data: EventData,
