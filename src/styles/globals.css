@@ -1248,7 +1248,7 @@ button.btn-close:focus {
 
 .feed_description {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   gap: 15px;
   padding-bottom: 20px;
   margin-top: 20px;
@@ -1367,7 +1367,7 @@ button.btn-close:focus {
 
 .feed_device_info>div {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   gap: 32px;
   flex-wrap: wrap;
   margin-top: 20px;
@@ -1377,7 +1377,7 @@ button.btn-close:focus {
 
 .feed_device_info .device_info {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 30px;
 }
@@ -1621,7 +1621,7 @@ button.btn-close:focus {
 
 .profile_details_inner {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .profile_details_inner>div:not(:last-child) {
@@ -1708,7 +1708,7 @@ button.btn-close:focus {
 
 .comment_lists .comment {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
@@ -2956,7 +2956,7 @@ button.btn-close:focus {
 
 .sharePhoto_modal .modal_inner .modal_content .share_content .social_share {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   justify-content: center;
   margin-right: -10px;
   margin-left: -10px;
@@ -3226,7 +3226,7 @@ button.btn-close:focus {
 
 .profile_informations {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-wrap: wrap;
 }
 
@@ -3249,7 +3249,7 @@ button.btn-close:focus {
   margin-bottom: 40px;
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
 }
@@ -3585,7 +3585,7 @@ button.btn-close:focus {
 .working_steps .single_step_inner .step_content {
   max-width: 526px;
   display: flex;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .single_step_inner .step_content .step_number {
@@ -4396,7 +4396,7 @@ blockquote .title {
 .why_do_think_item .user_details {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   column-gap: 8px;
   margin-bottom: 10px;
 }
@@ -4574,7 +4574,7 @@ blockquote .title {
 
 .last_weeks_top_content .selected_users ul {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-wrap: wrap;
   justify-content: center;
   gap: 25px;
@@ -5355,7 +5355,7 @@ blockquote .title {
   width: calc(100% - 220px);
   min-height: 100%;
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   justify-content: space-between;
   z-index: 1;
 }
@@ -5540,7 +5540,7 @@ blockquote .title {
 .about_profile_desc {
   display: flex;
   flex-wrap: wrap;
-  align-items: end;
+  align-items: flex-end;
   gap: 15px;
   justify-content: space-between;
   margin-top: -65px;
@@ -6268,7 +6268,7 @@ blockquote .title {
   margin-top: 40px;
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   gap: 20px;
 }
 
@@ -6280,8 +6280,8 @@ blockquote .title {
   border-radius: 8px;
   padding: 16px;
   display: inline-flex;
-  align-items: start;
-  justify-content: start;
+  align-items: flex-start;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
   /* align-content: flex-start; */
@@ -6296,7 +6296,7 @@ blockquote .title {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .gallery_manage_photos .manage_photo_item .grab {
@@ -7318,7 +7318,7 @@ blockquote .title {
 .price_table_item_inner .price_table_header .price {
   line-height: 1;
   display: inline-flex;
-  align-items: end;
+  align-items: flex-end;
   column-gap: 10px;
   margin: 0;
   justify-content: center;
@@ -7631,7 +7631,7 @@ blockquote .title {
 .participating_content_item {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   gap: 40px;
 }
 
@@ -7651,7 +7651,7 @@ blockquote .title {
 .participating_member_info .member_info_top {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   gap: 15px;
 }
 
@@ -7759,7 +7759,7 @@ blockquote .title {
   margin-top: 25px;
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   gap: 25px;
 }
 
@@ -7965,7 +7965,7 @@ blockquote .title {
 .invite_links {
   display: flex;
   flex-wrap: wrap;
-  align-items: start;
+  align-items: flex-start;
   justify-content: center;
   column-gap: 80px;
   row-gap: 40px;
@@ -8105,7 +8105,7 @@ blockquote .title {
   flex-direction: column;
   max-width: 276px;
   width: 100%;
-  align-items: start;
+  align-items: flex-start;
   margin-top: 20px;
   gap: 4px;
 }
@@ -8375,7 +8375,7 @@ blockquote .title {
   margin-top: 24px;
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: flex-start;
   gap: 16px;
 }
 
