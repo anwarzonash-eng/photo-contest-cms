@@ -1,6 +1,6 @@
 # Photo Contest CMS
 
-The admin panel for a photo-contest community platform. The site owner uses it to manage contest events and past events, weekly top-ten lists, activity and call-outs, user-submitted images, notifications, and the ChatGPT prompts used for AI photo feedback. It talks to [photo-contest-api](https://github.com/anwarzonash-eng/photo-contest-api).
+The admin panel for a photo-contest community platform. The site owner uses it to manage contest events and past events, weekly top-ten lists, activity and call-outs, user-submitted images, and notifications. It talks to [photo-contest-api](https://github.com/anwarzonash-eng/photo-contest-api).
 
 ## Tech stack
 
@@ -33,6 +33,7 @@ Production: `npm run build && npm start` (port 3030).
 
 ```
 src/
+  pages/        events, past-events, weekly-topten, activity, user-images, login
   components/   layout and forms
   services/     API clients
   schemas/      Yup validation schemas

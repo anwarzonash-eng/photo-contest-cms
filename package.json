@@ -1,7 +1,7 @@
 {
   "name": "photo-contest-cms",
   "version": "0.1.0",
-  "description": "Admin panel for the photo contest platform: events, user images, activity and AI prompts",
+  "description": "Admin panel for the photo contest platform: events, user images and activity",
   "author": "Zonash",
   "license": "MIT",
   "private": true,
